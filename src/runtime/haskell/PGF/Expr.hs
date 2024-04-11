@@ -1,3 +1,4 @@
+{-# LANGUAGE DerivingVia, DataKinds, DeriveGeneric, TemplateHaskell, StandaloneDeriving, DeriveAnyClass, ScopedTypeVariables, StandaloneDeriving #-}
 module PGF.Expr(Tree, BindType(..), Expr(..), Literal(..), Patt(..), Equation(..),
                 readExpr, showExpr, pExpr, pBinds, ppExpr, ppPatt, pattScope,
 
@@ -32,6 +33,9 @@ import qualified Data.Map as Map hiding (showTree)
 import Control.Monad
 import qualified Text.PrettyPrint as PP
 import qualified Text.ParserCombinators.ReadP as RP
+import Data.Aeson (ToJSON (toJSON), FromJSON (parseJSON))
+import qualified Data.ByteString.Char8 as BS
+import Deriving.Aeson
 
 type MetaId = Int
 
@@ -58,6 +62,34 @@ data Expr =
  | ETyped Expr Type                 -- ^ local type signature
  | EImplArg Expr                    -- ^ implicit argument in expression
   deriving (Eq,Ord,Show)
+
+deriving instance Generic BindType
+deriving instance ToJSON BindType
+deriving instance FromJSON BindType
+
+deriving instance Generic CId
+deriving instance ToJSON CId
+deriving instance FromJSON CId
+
+deriving instance Generic Type
+deriving instance ToJSON Type
+deriving instance FromJSON Type
+
+deriving instance Generic Literal
+deriving instance ToJSON Literal
+deriving instance FromJSON Literal
+
+deriving instance Generic Expr
+deriving instance ToJSON Expr
+deriving instance FromJSON Expr
+
+instance ToJSON BS.ByteString where
+  toJSON = toJSON . BS.unpack
+
+instance FromJSON BS.ByteString where
+  parseJSON v = do
+    v' :: String <- parseJSON v
+    pure . BS.pack $ v'
 
 -- | The pattern is used to define equations in the abstract syntax of the grammar.
 data Patt =
